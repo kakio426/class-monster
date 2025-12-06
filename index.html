@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>클래스 몬스터 키우기</title>
+  <!-- 귀여운 폰트 (선택 사항) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ffe4f2, #e1f3ff, #fff8dd);
+      color: #333;
+    }
+
+    .app-container {
+      width: min(480px, 95vw);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      padding: 24px 20px 28px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+      text-align: center;
+      border: 3px solid #ffd8f0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-container::before {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, #fff3c4 0, #ffdfeb 45%, transparent 70%);
+      top: -80px;
+      right: -60px;
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .title-area {
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: #fff4c3;
+      color: #f28f3b;
+      border: 1px dashed #f6b15c;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 4px;
+      color: #444;
+    }
+
+    .class-name {
+      font-size: 15px;
+      color: #777;
+      margin-bottom: 12px;
+    }
+
+    .monster-wrapper {
+      margin: 10px auto 16px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #ffffff 0, #ffe6ff 35%, #ffe9c8 70%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      border: 4px solid #ffe0ff;
+      position: relative;
+    }
+
+    .monster-wrapper::after {
+      content: "★";
+      position: absolute;
+      font-size: 20px;
+      top: 12px;
+      right: 20px;
+      color: #ffd54f;
+      transform: rotate(-10deg);
+    }
+
+    .monster-wrapper::before {
+      content: "♥";
+      position: absolute;
+      font-size: 18px;
+      bottom: 14px;
+      left: 18px;
+      color: #ff9aa2;
+      transform: rotate(8deg);
+    }
+
+    .monster-image {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+    }
+
+    .level-label {
+      font-size: 14px;
+      margin-bottom: 2px;
+      color: #666;
+    }
+
+    .cookie-info {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .cookie-info span {
+      font-weight: 700;
+      color: #ff7b7b;
+    }
+
+    .progress-container {
+      margin: 8px auto 4px;
+      width: 100%;
+      max-width: 360px;
+      background: #ffeefb;
+      border-radius: 999px;
+      padding: 4px;
+      border: 2px solid #ffcde6;
+      box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.7);
+    }
+
+    .progress-bar {
+      height: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffb6c1, #ffde7d, #a4e4ff);
+      width: 0%;
+      transition: width 0.4s ease-out;
+    }
+
+    .progress-text {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #555;
+    }
+
+    .status-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 13px;
+      color: #666;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      background: #f1f5ff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      border: 1px solid #d1ddff;
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: #999;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .last-updated {
+      font-size: 11px;
+    }
+
+    .error-message {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #e57373;
+    }
+
+    .reload-button {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: none;
+      background: #ffd6e8;
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+      box-shadow: 0 2px 0 rgba(230, 134, 173, 0.5);
+    }
+
+    .reload-button:hover {
+      background: #ffc2df;
+    }
+
+    .reload-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 0 rgba(230, 134, 173, 0.7);
+    }
+
+    .loading-dot {
+      display: inline-block;
+      font-size: 11px;
+      color: #999;
+    }
+
+    @media (max-width: 480px) {
+      .app-container {
+        padding: 18px 16px 22px;
+      }
+
+      .monster-wrapper {
+        width: 200px;
+        height: 200px;
+      }
+
+      .monster-image {
+        width: 135px;
+        height: 135px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="title-area">
+      <div class="badge">🍪 클래스 몬스터 키우기</div>
+      <h1>우리 반 몬스터</h1>
+      <div class="class-name" id="classNameLabel">내 반 이름 불러오는 중...</div>
+    </div>
+
+    <div class="monster-wrapper">
+      <!-- 쿠키 개수에 따라 바뀌는 몬스터 이미지 -->
+      <img
+        src="images/egg.png"
+        alt="귀여운 몬스터"
+        class="monster-image"
+        id="monsterImage"
+      />
+    </div>
+
+    <div class="level-label" id="levelLabel">레벨 정보를 불러오는 중...</div>
+
+    <!-- 현재 쿠키와 다음 레벨까지 남은 쿠키 설명 -->
+    <div class="cookie-info" id="cookieInfo">
+      현재 쿠키: <span>0개</span>, 다음 레벨까지 <span>0개</span>
+    </div>
+
+    <!-- 진행 바 -->
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText">0% 달성</div>
+
+    <div class="status-row">
+      <div class="status-pill" id="rangeLabel">0 ~ 99개 구간</div>
+      <div class="status-pill" id="statusPill">데이터 불러오는 중...</div>
+    </div>
+
+    <div class="error-message" id="errorMessage" style="display:none;"></div>
+
+    <div class="footer">
+      <span class="last-updated" id="lastUpdated">마지막 업데이트: -</span>
+      <span>
+        <button class="reload-button" id="reloadButton">🔄 새로고침</button>
+        <span class="loading-dot" id="loadingDot" style="display:none;">(불러오는 중)</span>
+      </span>
+    </div>
+  </div>
+
+  <script>
+    // ==========================
+    // 설정 영역 (여기만 수정하면 됨)
+    // ==========================
+
+    // 1) 다했니 Open API 키를 여기에 입력
+    const API_KEY = 'YOUR_KEY_HERE';
+
+    // 2) 우리 반 이름 (API에서 받은 name과 일치하도록 설정)
+    //    이 값과 일치하는 학급을 찾아서 사용, 없으면 첫 번째 학급 사용
+    const CLASS_NAME = '3학년 2반';
+
+    // 3) API 엔드포인트 URL
+    const API_URL = 'https://api.dahandin.com/openapi/v1/get/class/list';
+
+    // 4) 주기적 새로고침 간격 (ms) - 요구사항: 10초
+    const REFRESH_INTERVAL_MS = 10_000;
+
+    // ==========================
+    // DOM 요소 캐싱
+    // ==========================
+    const monsterImageEl = document.getElementById('monsterImage');
+    const classNameLabelEl = document.getElementById('classNameLabel');
+    const levelLabelEl = document.getElementById('levelLabel');
+    const cookieInfoEl = document.getElementById('cookieInfo');
+    const progressBarEl = document.getElementById('progressBar');
+    const progressTextEl = document.getElementById('progressText');
+    const rangeLabelEl = document.getElementById('rangeLabel');
+    const statusPillEl = document.getElementById('statusPill');
+    const errorMessageEl = document.getElementById('errorMessage');
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    const reloadButtonEl = document.getElementById('reloadButton');
+    const loadingDotEl = document.getElementById('loadingDot');
+
+    // ==========================
+    // 유틸 함수들
+    // ==========================
+
+    /**
+     * 현재 쿠키 개수(totalCookies)에 따라
+     * 몬스터 이미지, 레벨, 구간 정보를 계산하는 함수
+     */
+    function getMonsterState(totalCookies) {
+      let imagePath = 'images/egg.png';
+      let levelText = '알(egg) 단계';
+      let rangeText = '0 ~ 99개 구간';
+      let minForThisLevel = 0;
+      let nextLevelAt = 100; // 다음 레벨 목표 쿠키 수
+
+      if (totalCookies >= 1000) {
+        imagePath = 'images/level4.png';
+        levelText = '레벨 4 (최고 레벨!)';
+        rangeText = '1000개 이상';
+        minForThisLevel = 1000;
+        nextLevelAt = null; // 최고 레벨
+      } else if (totalCookies >= 600) {
+        imagePath = 'images/level3.png';
+        levelText = '레벨 3';
+        rangeText = '600 ~ 999개 구간';
+        minForThisLevel = 600;
+        nextLevelAt = 1000;
+      } else if (totalCookies >= 300) {
+        imagePath = 'images/level2.png';
+        levelText = '레벨 2';
+        rangeText = '300 ~ 599개 구간';
+        minForThisLevel = 300;
+        nextLevelAt = 600;
+      } else if (totalCookies >= 100) {
+        imagePath = 'images/level1.png';
+        levelText = '레벨 1';
+        rangeText = '100 ~ 299개 구간';
+        minForThisLevel = 100;
+        nextLevelAt = 300;
+      } else {
+        // 0 ~ 99
+        imagePath = 'images/egg.png';
+        levelText = '알(egg) 단계';
+        rangeText = '0 ~ 99개 구간';
+        minForThisLevel = 0;
+        nextLevelAt = 100;
+      }
+
+      return {
+        imagePath,
+        levelText,
+        rangeText,
+        minForThisLevel,
+        nextLevelAt
+      };
+    }
+
+    /**
+     * 진행 바(%) 계산
+     * - 현재 레벨 구간 내에서 얼마나 채웠는지 보여줌
+     */
+    function calculateProgressPercent(totalCookies, minForThisLevel, nextLevelAt) {
+      if (nextLevelAt === null) {
+        // 최고 레벨인 경우 항상 100%
+        return 100;
+      }
+      const range = nextLevelAt - minForThisLevel;
+      if (range <= 0) return 0;
+      const valueInRange = totalCookies - minForThisLevel;
+      const ratio = Math.max(0, Math.min(1, valueInRange / range));
+      return Math.round(ratio * 100);
+    }
+
+    /**
+     * 숫자를 한국식 세 자리 콤마로 포맷팅
+     */
+    function formatNumber(num) {
+      return num.toLocaleString('ko-KR');
+    }
+
+    /**
+     * 마지막 업데이트 시간 텍스트 생성
+     */
+    function formatLastUpdated(date) {
+      const pad = (n) => (n < 10 ? '0' + n : n);
+      const y = date.getFullYear();
+      const m = pad(date.getMonth() + 1);
+      const d = pad(date.getDate());
+      const hh = pad(date.getHours());
+      const mm = pad(date.getMinutes());
+      const ss = pad(date.getSeconds());
+      return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    }
+
+    // ==========================
+    // UI 업데이트 함수
+    // ==========================
+
+    /**
+     * API에서 받아온 학급 데이터로
+     * 화면(몬스터, 진행바, 텍스트)을 갱신
+     */
+    function updateUIWithClassData(classData) {
+      const { name, totalCookies = 0 } = classData;
+
+      const state = getMonsterState(totalCookies);
+      const percent = calculateProgressPercent(
+        totalCookies,
+        state.minForThisLevel,
+        state.nextLevelAt
+      );
+
+      // 이미지 변경
+      monsterImageEl.src = state.imagePath;
+
+      // 학급 이름
+      classNameLabelEl.textContent = name || '학급 이름 없음';
+
+      // 레벨 텍스트
+      levelLabelEl.textContent = state.levelText;
+
+      // 쿠키 정보, 다음 레벨까지 남은 쿠키 수 계산
+      let remainingText;
+      if (state.nextLevelAt === null) {
+        remainingText = '이미 최고 레벨이에요! 🎉';
+      } else {
+        const remain = Math.max(0, state.nextLevelAt - totalCookies);
+        remainingText = `다음 레벨까지 ${formatNumber(remain)}개`;
+      }
+
+      cookieInfoEl.innerHTML = `현재 쿠키: <span>${formatNumber(
+        totalCookies
+      )}개</span>, ${remainingText}`;
+
+      // 진행 바
+      progressBarEl.style.width = `${percent}%`;
+      progressTextEl.textContent = `${percent}% 달성`;
+
+      // 구간 라벨
+      rangeLabelEl.textContent = state.rangeText;
+
+      // 상태 라벨
+      if (totalCookies === 0) {
+        statusPillEl.textContent = '시작 단계, 쿠키 모으기 출발! 🐣';
+      } else if (state.nextLevelAt === null) {
+        statusPillEl.textContent = '최고 레벨 달성! 계속 쿠키를 모아봐요 ✨';
+      } else {
+        statusPillEl.textContent = '우리 반이 쿠키를 열심히 모으는 중이에요 💪';
+      }
+
+      // 에러 메시지 숨기기
+      errorMessageEl.style.display = 'none';
+      errorMessageEl.textContent = '';
+
+      // 마지막 업데이트 시간
+      lastUpdatedEl.textContent = `마지막 업데이트: ${formatLastUpdated(new Date())}`;
+    }
+
+    /**
+     * 에러 메시지를 화면에 표시
+     */
+    function showError(message) {
+      errorMessageEl.style.display = 'block';
+      errorMessageEl.textContent = message;
+      statusPillEl.textContent = '데이터를 불러오는 데 문제가 있어요 😢';
+    }
+
+    /**
+     * 로딩 상태 표시
+     */
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loadingDotEl.style.display = 'inline';
+        reloadButtonEl.disabled = true;
+        reloadButtonEl.textContent = '불러오는 중...';
+      } else {
+        loadingDotEl.style.display = 'none';
+        reloadButtonEl.disabled = false;
+        reloadButtonEl.textContent = '🔄 새로고침';
+      }
+    }
+
+    // ==========================
+    // API 호출 함수
+    // ==========================
+
+    /**
+     * 다했니 Open API에서 학급 리스트를 가져와
+     * 우리 반(totalCookies 포함) 정보를 반환
+     */
+    async function fetchClassData() {
+      try {
+        setLoading(true);
+
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          headers: {
+            'X-API-Key': API_KEY
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API 응답 오류 (HTTP ${response.status})`);
+        }
+
+        const json = await response.json();
+
+        // 데이터 구조: { data: [ { name: "3학년 2반", totalCookies: 120, ... } ] }
+        const list = Array.isArray(json.data) ? json.data : [];
+
+        if (list.length === 0) {
+          throw new Error('API 응답에 학급 데이터가 없습니다.');
+        }
+
+        // CLASS_NAME과 일치하는 학급 찾기, 없으면 첫 번째 학급 사용
+        let classData = list.find((item) => item.name === CLASS_NAME);
+        if (!classData) {
+          classData = list[0];
+        }
+
+        updateUIWithClassData(classData);
+      } catch (err) {
+        console.error(err);
+        showError(err.message || '알 수 없는 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ==========================
+    // 초기화 및 주기적 업데이트 설정
+    // ==========================
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 페이지 로드 시 한 번 즉시 호출
+      fetchClassData();
+
+      // 수동 새로고침 버튼
+      reloadButtonEl.addEventListener('click', () => {
+        fetchClassData();
+      });
+
+      // 10초마다 자동으로 업데이트
+      setInterval(() => {
+        fetchClassData();
+      }, REFRESH_INTERVAL_MS);
+    });
+  </script>
+</body>
+</html>
