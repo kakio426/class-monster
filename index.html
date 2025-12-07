@@ -286,123 +286,94 @@
 
   <script>
     // ==========================
-    // 설정 영역 (여기만 수정하면 됨)
+    // 설정 영역
     // ==========================
 
-    // 1) 다했니 Open API 키를 여기에 입력
+    // 1) 다했니 Open API 키
     const API_KEY = 'ad7855503128e6188fd23f133296506a69f9857cdc3d6a1a';
 
-    // 2) 우리 반 이름 (API에서 받은 name과 일치하도록 설정)
-    //    이 값과 일치하는 학급을 찾아서 사용, 없으면 첫 번째 학급 사용
+    // 2) 우리 반 이름 (API에서 내려온 name과 동일하게)
     const CLASS_NAME = '3학년 1반';
 
-    // 3) API 엔드포인트 URL
+    // 3) API 엔드포인트
     const API_URL = 'https://api.dahandin.com/openapi/v1/get/class/list';
 
-    // 4) 주기적 새로고침 간격 (ms) - 요구사항: 10초
+    // 4) 새로고침 간격(ms) - 10초
     const REFRESH_INTERVAL_MS = 10_000;
 
     // ==========================
     // DOM 요소 캐싱
     // ==========================
-    const monsterImageEl = document.getElementById('monsterImage');
+    const monsterImageEl   = document.getElementById('monsterImage');
     const classNameLabelEl = document.getElementById('classNameLabel');
-    const levelLabelEl = document.getElementById('levelLabel');
-    const cookieInfoEl = document.getElementById('cookieInfo');
-    const progressBarEl = document.getElementById('progressBar');
-    const progressTextEl = document.getElementById('progressText');
-    const rangeLabelEl = document.getElementById('rangeLabel');
-    const statusPillEl = document.getElementById('statusPill');
-    const errorMessageEl = document.getElementById('errorMessage');
-    const lastUpdatedEl = document.getElementById('lastUpdated');
-    const reloadButtonEl = document.getElementById('reloadButton');
-    const loadingDotEl = document.getElementById('loadingDot');
+    const levelLabelEl     = document.getElementById('levelLabel');
+    const cookieInfoEl     = document.getElementById('cookieInfo');
+    const progressBarEl    = document.getElementById('progressBar');
+    const progressTextEl   = document.getElementById('progressText');
+    const rangeLabelEl     = document.getElementById('rangeLabel');
+    const statusPillEl     = document.getElementById('statusPill');
+    const errorMessageEl   = document.getElementById('errorMessage');
+    const lastUpdatedEl    = document.getElementById('lastUpdated');
+    const reloadButtonEl   = document.getElementById('reloadButton');
+    const loadingDotEl     = document.getElementById('loadingDot');
 
     // ==========================
-    // 유틸 함수들
+    // 유틸 함수
     // ==========================
 
-    /**
-     * 현재 쿠키 개수(totalCookies)에 따라
-     * 몬스터 이미지, 레벨, 구간 정보를 계산하는 함수
-     */
+    // 쿠키 개수에 따른 몬스터 상태 계산
     function getMonsterState(totalCookies) {
-      let imagePath = 'images/egg.png';
-      let levelText = '알(egg) 단계';
-      let rangeText = '0 ~ 99개 구간';
+      let imagePath       = 'images/egg.png';
+      let levelText       = '알(egg) 단계';
+      let rangeText       = '0 ~ 99개 구간';
       let minForThisLevel = 0;
-      let nextLevelAt = 100; // 다음 레벨 목표 쿠키 수
+      let nextLevelAt     = 100;
 
-      if (totalCookies >= 1000) {
-        imagePath = 'images/level4.png';
-        levelText = '레벨 4 (최고 레벨!)';
-        rangeText = '1000개 이상';
-        minForThisLevel = 1000;
-        nextLevelAt = null; // 최고 레벨
-      } else if (totalCookies >= 600) {
-        imagePath = 'images/level3.png';
-        levelText = '레벨 3';
-        rangeText = '600 ~ 999개 구간';
+      if (totalCookies >= 600) {
+        imagePath       = 'images/level3.png';
+        levelText       = '레벨 3';
+        rangeText       = '600 ~ 999개 구간';
         minForThisLevel = 600;
-        nextLevelAt = 1000;
       } else if (totalCookies >= 300) {
-        imagePath = 'images/level2.png';
-        levelText = '레벨 2';
-        rangeText = '300 ~ 599개 구간';
+        imagePath       = 'images/level2.png';
+        levelText       = '레벨 2';
+        rangeText       = '300 ~ 599개 구간';
         minForThisLevel = 300;
-        nextLevelAt = 600;
+        nextLevelAt     = 600;
       } else if (totalCookies >= 100) {
-        imagePath = 'images/level1.png';
-        levelText = '레벨 1';
-        rangeText = '100 ~ 299개 구간';
+        imagePath       = 'images/level1.png';
+        levelText       = '레벨 1';
+        rangeText       = '100 ~ 299개 구간';
         minForThisLevel = 100;
-        nextLevelAt = 300;
+        nextLevelAt     = 300;
       } else {
-        // 0 ~ 99
-        imagePath = 'images/egg.png';
-        levelText = '알(egg) 단계';
-        rangeText = '0 ~ 99개 구간';
+        imagePath       = 'images/egg.png';
+        levelText       = '알(egg) 단계';
+        rangeText       = '0 ~ 99개 구간';
         minForThisLevel = 0;
-        nextLevelAt = 100;
+        nextLevelAt     = 100;
       }
 
-      return {
-        imagePath,
-        levelText,
-        rangeText,
-        minForThisLevel,
-        nextLevelAt
-      };
+      return { imagePath, levelText, rangeText, minForThisLevel, nextLevelAt };
     }
 
-    /**
-     * 진행 바(%) 계산
-     * - 현재 레벨 구간 내에서 얼마나 채웠는지 보여줌
-     */
+    // 레벨 내 진행 퍼센트 계산
     function calculateProgressPercent(totalCookies, minForThisLevel, nextLevelAt) {
-      if (nextLevelAt === null) {
-        // 최고 레벨인 경우 항상 100%
-        return 100;
-      }
-      const range = nextLevelAt - minForThisLevel;
+      if (nextLevelAt === null) return 100;
+      const range        = nextLevelAt - minForThisLevel;
       if (range <= 0) return 0;
       const valueInRange = totalCookies - minForThisLevel;
-      const ratio = Math.max(0, Math.min(1, valueInRange / range));
+      const ratio        = Math.max(0, Math.min(1, valueInRange / range));
       return Math.round(ratio * 100);
     }
 
-    /**
-     * 숫자를 한국식 세 자리 콤마로 포맷팅
-     */
- function formatNumber(num) {
-  if (num === null || num === undefined || isNaN(num)) return '0';
-  return Number(num).toLocaleString('ko-KR');
-}
+    // 숫자 포맷 (null/NaN 안전)
+    function formatNumber(num) {
+      if (num === null || num === undefined || isNaN(num)) return '0';
+      return Number(num).toLocaleString('ko-KR');
+    }
 
-
-    /**
-     * 마지막 업데이트 시간 텍스트 생성
-     */
+    // 마지막 업데이트 시간 포맷
     function formatLastUpdated(date) {
       const pad = (n) => (n < 10 ? '0' + n : n);
       const y = date.getFullYear();
@@ -415,33 +386,31 @@
     }
 
     // ==========================
-    // UI 업데이트 함수
+    // UI 업데이트
     // ==========================
-
-    /**
-     * API에서 받아온 학급 데이터로
-     * 화면(몬스터, 진행바, 텍스트)을 갱신
-     */
     function updateUIWithClassData(classData) {
-      const { name, totalCookies = 0 } = classData;
+      const name     = classData?.name || '학급 이름 없음';
+      const rawTotal = classData?.totalCookies;
+      const totalCookies =
+        typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : 0;
 
-      const state = getMonsterState(totalCookies);
+      const state   = getMonsterState(totalCookies);
       const percent = calculateProgressPercent(
         totalCookies,
         state.minForThisLevel,
         state.nextLevelAt
       );
 
-      // 이미지 변경
+      // 이미지
       monsterImageEl.src = state.imagePath;
 
       // 학급 이름
-      classNameLabelEl.textContent = name || '학급 이름 없음';
+      classNameLabelEl.textContent = name;
 
       // 레벨 텍스트
       levelLabelEl.textContent = state.levelText;
 
-      // 쿠키 정보, 다음 레벨까지 남은 쿠키 수 계산
+      // 다음 레벨까지
       let remainingText;
       if (state.nextLevelAt === null) {
         remainingText = '이미 최고 레벨이에요! 🎉';
@@ -450,11 +419,11 @@
         remainingText = `다음 레벨까지 ${formatNumber(remain)}개`;
       }
 
-      cookieInfoEl.innerHTML = `현재 쿠키: <span>${formatNumber(
-        totalCookies
-      )}개</span>, ${remainingText}`;
+      cookieInfoEl.innerHTML =
+        `현재 쿠키: <span>${formatNumber(totalCookies)}개</span>, ` +
+        remainingText;
 
-      // 진행 바
+      // 진행바
       progressBarEl.style.width = `${percent}%`;
       progressTextEl.textContent = `${percent}% 달성`;
 
@@ -470,93 +439,81 @@
         statusPillEl.textContent = '우리 반이 쿠키를 열심히 모으는 중이에요 💪';
       }
 
-      // 에러 메시지 숨기기
+      // 에러 제거
       errorMessageEl.style.display = 'none';
-      errorMessageEl.textContent = '';
+      errorMessageEl.textContent   = '';
 
-      // 마지막 업데이트 시간
-      lastUpdatedEl.textContent = `마지막 업데이트: ${formatLastUpdated(new Date())}`;
+      // 마지막 업데이트
+      lastUpdatedEl.textContent =
+        `마지막 업데이트: ${formatLastUpdated(new Date())}`;
     }
 
-    /**
-     * 에러 메시지를 화면에 표시
-     */
+    // 에러 표시
     function showError(message) {
       errorMessageEl.style.display = 'block';
-      errorMessageEl.textContent = message;
-      statusPillEl.textContent = '데이터를 불러오는 데 문제가 있어요 😢';
+      errorMessageEl.textContent   = message;
+      statusPillEl.textContent     = '데이터를 불러오는 데 문제가 있어요 😢';
     }
 
-    /**
-     * 로딩 상태 표시
-     */
+    // 로딩 표시
     function setLoading(isLoading) {
       if (isLoading) {
         loadingDotEl.style.display = 'inline';
-        reloadButtonEl.disabled = true;
+        reloadButtonEl.disabled    = true;
         reloadButtonEl.textContent = '불러오는 중...';
       } else {
         loadingDotEl.style.display = 'none';
-        reloadButtonEl.disabled = false;
+        reloadButtonEl.disabled    = false;
         reloadButtonEl.textContent = '🔄 새로고침';
       }
     }
 
     // ==========================
-    // API 호출 함수
+    // API 호출
     // ==========================
-
-    /**
-     * 다했니 Open API에서 학급 리스트를 가져와
-     * 우리 반(totalCookies 포함) 정보를 반환
-     */
     async function fetchClassData() {
-  try {
-    setLoading(true);
-    const response = await fetch(API_URL, {
-      method: 'GET',
-      headers: { 'X-API-Key': API_KEY }
-    });
-    console.log('[DEBUG] status:', response.status, response.statusText);
-    const text = await response.text();
-    console.log('[DEBUG] raw body:', text);
+      try {
+        setLoading(true);
 
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      console.error('[DEBUG] JSON parse error', e);
-      throw new Error('JSON 파싱 실패');
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          headers: { 'X-API-Key': API_KEY }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API 응답 오류 (HTTP ${response.status})`);
+        }
+
+        const json = await response.json();
+        const list = Array.isArray(json.data) ? json.data : [];
+
+        if (!list.length) {
+          throw new Error('API 응답에 학급 데이터가 없습니다.');
+        }
+
+        let classData = list.find(item => item.name === CLASS_NAME);
+        if (!classData) classData = list[0];
+
+        updateUIWithClassData(classData);
+      } catch (err) {
+        console.error(err);
+        showError(err.message || '알 수 없는 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
     }
-    console.log('[DEBUG] parsed json:', json);
-
-    const list = Array.isArray(json.data) ? json.data : [];
-    console.log('[DEBUG] data length:', list.length);
-
-    if (list.length === 0) {
-      throw new Error('API 응답에 학급 데이터가 없습니다.');
-    }
-    // ... 이하 동일 ...
-
 
     // ==========================
-    // 초기화 및 주기적 업데이트 설정
+    // 초기화 및 주기 업데이트
     // ==========================
-
     document.addEventListener('DOMContentLoaded', () => {
-      // 페이지 로드 시 한 번 즉시 호출
       fetchClassData();
 
-      // 수동 새로고침 버튼
-      reloadButtonEl.addEventListener('click', () => {
-        fetchClassData();
-      });
+      reloadButtonEl.addEventListener('click', fetchClassData);
 
-      // 10초마다 자동으로 업데이트
-      setInterval(() => {
-        fetchClassData();
-      }, REFRESH_INTERVAL_MS);
+      setInterval(fetchClassData, REFRESH_INTERVAL_MS);
     });
   </script>
 </body>
 </html>
+
