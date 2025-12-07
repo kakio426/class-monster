@@ -394,9 +394,11 @@
     /**
      * 숫자를 한국식 세 자리 콤마로 포맷팅
      */
-    function formatNumber(num) {
-      return num.toLocaleString('ko-KR');
-    }
+ function formatNumber(num) {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  return Number(num).toLocaleString('ko-KR');
+}
+
 
     /**
      * 마지막 업데이트 시간 텍스트 생성
