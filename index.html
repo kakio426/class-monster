@@ -2,12 +2,25 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>클래스 몬스터 키우기</title>
+  
+  <!-- 귀여운 폰트 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- 모바일 디버깅 도구 (개발 완료 후 삭제 가능) -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
+  
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       min-height: 100vh;
@@ -17,6 +30,7 @@
       background: linear-gradient(135deg, #ffe4f2, #e1f3ff, #fff8dd);
       color: #333;
     }
+
     .app-container {
       width: min(480px, 95vw);
       background: rgba(255, 255, 255, 0.9);
@@ -28,6 +42,7 @@
       position: relative;
       overflow: hidden;
     }
+
     .app-container::before {
       content: "";
       position: absolute;
@@ -39,7 +54,11 @@
       opacity: 0.7;
       z-index: -1;
     }
-    .title-area { margin-bottom: 10px; }
+
+    .title-area {
+      margin-bottom: 10px;
+    }
+
     .badge {
       display: inline-block;
       padding: 4px 12px;
@@ -50,8 +69,18 @@
       border: 1px dashed #f6b15c;
       margin-bottom: 4px;
     }
-    h1 { font-size: 26px; margin-bottom: 4px; color: #444; }
-    .class-name { font-size: 15px; color: #777; margin-bottom: 12px; }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 4px;
+      color: #444;
+    }
+
+    .class-name {
+      font-size: 15px;
+      color: #777;
+      margin-bottom: 12px;
+    }
 
     .monster-wrapper {
       margin: 10px auto 16px;
@@ -66,6 +95,7 @@
       border: 4px solid #ffe0ff;
       position: relative;
     }
+
     .monster-wrapper::after {
       content: "★";
       position: absolute;
@@ -75,6 +105,7 @@
       color: #ffd54f;
       transform: rotate(-10deg);
     }
+
     .monster-wrapper::before {
       content: "♥";
       position: absolute;
@@ -84,15 +115,28 @@
       color: #ff9aa2;
       transform: rotate(8deg);
     }
+
     .monster-image {
       width: 150px;
       height: 150px;
       object-fit: contain;
     }
 
-    .level-label { font-size: 14px; margin-bottom: 2px; color: #666; }
-    .cookie-info { font-size: 15px; margin-bottom: 8px; }
-    .cookie-info span { font-weight: 700; color: #ff7b7b; }
+    .level-label {
+      font-size: 14px;
+      margin-bottom: 2px;
+      color: #666;
+    }
+
+    .cookie-info {
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .cookie-info span {
+      font-weight: 700;
+      color: #ff7b7b;
+    }
 
     .progress-container {
       margin: 8px auto 4px;
@@ -104,6 +148,7 @@
       border: 2px solid #ffcde6;
       box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.7);
     }
+
     .progress-bar {
       height: 18px;
       border-radius: 999px;
@@ -111,7 +156,12 @@
       width: 0%;
       transition: width 0.4s ease-out;
     }
-    .progress-text { font-size: 13px; margin-top: 4px; color: #555; }
+
+    .progress-text {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #555;
+    }
 
     .status-row {
       margin-top: 10px;
@@ -122,14 +172,13 @@
       color: #666;
       flex-wrap: wrap;
     }
+
     .status-pill {
       background: #f1f5ff;
       border-radius: 999px;
       padding: 4px 10px;
       border: 1px solid #d1ddff;
     }
-
-    .error-message { margin-top: 6px; font-size: 12px; color: #e57373; }
 
     .footer {
       margin-top: 14px;
@@ -141,7 +190,16 @@
       gap: 6px;
       flex-wrap: wrap;
     }
-    .last-updated { font-size: 11px; }
+
+    .last-updated {
+      font-size: 11px;
+    }
+
+    .error-message {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #e57373;
+    }
 
     .reload-button {
       font-size: 11px;
@@ -153,7 +211,11 @@
       transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
       box-shadow: 0 2px 0 rgba(230, 134, 173, 0.5);
     }
-    .reload-button:hover { background: #ffc2df; }
+
+    .reload-button:hover {
+      background: #ffc2df;
+    }
+
     .reload-button:active {
       transform: translateY(1px);
       box-shadow: 0 1px 0 rgba(230, 134, 173, 0.7);
@@ -166,9 +228,19 @@
     }
 
     @media (max-width: 480px) {
-      .app-container { padding: 18px 16px 22px; }
-      .monster-wrapper { width: 200px; height: 200px; }
-      .monster-image { width: 135px; height: 135px; }
+      .app-container {
+        padding: 18px 16px 22px;
+      }
+
+      .monster-wrapper {
+        width: 200px;
+        height: 200px;
+      }
+
+      .monster-image {
+        width: 135px;
+        height: 135px;
+      }
     }
   </style>
 </head>
@@ -220,10 +292,13 @@
     // ==========================
     // 1. 기본 설정
     // ==========================
-    const API_KEY  = 'ad7855503128e6188fd23f133296506a69f9857cdc3d6a1a';   // 꼭 바꾸기!
+    const API_KEY  = 'ad7855503128e6188fd23f133296506a69f9857cdc3d6a1a';   // ⭐ 본인 API KEY로 변경!
     const API_URL  = 'https://api.dahandin.com/openapi/v1/get/class/list';
-    const CLASS_NAME = '따뜻한인성';               // 다했니에 등록된 반 이름과 완전히 동일하게
-    const REFRESH_INTERVAL_MS = 10000;
+    const CLASS_NAME = '따뜻한인성';               // ⭐ 다했니에 등록된 반 이름과 완전히 동일하게
+    const REFRESH_INTERVAL_MS = 10000;             // 10초
+
+    console.log('🎯 스크립트 로드됨!');
+    console.log('📚 설정된 CLASS_NAME:', CLASS_NAME);
 
     // ==========================
     // 2. DOM 요소
@@ -271,7 +346,7 @@
       if (totalCookies >= 600) {
         imagePath       = 'images/level3.png';
         levelText       = '레벨 3';
-        rangeText       = '600 ~ 999개 구간';
+        rangeText       = '600개 이상';
         minForThisLevel = 600;
         nextLevelAt     = null;   // 최고 레벨
       } else if (totalCookies >= 300) {
@@ -325,15 +400,23 @@
     }
 
     // ==========================
-    // 4. UI 갱신 핵심 함수
+    // 4. UI 갱신 핵심 함수 (수정됨!)
     // ==========================
     function updateUIWithClassData(classData) {
       const name = classData?.name || '학급 이름 없음';
 
-      // ★ totalCookies는 API 응답에 이미 있음
-      const rawTotal = classData?.totalCookies;
-      const totalCookies =
-        typeof rawTotal === 'number' && !isNaN(rawTotal) ? rawTotal : 0;
+      // ⭐ 수정: totalCookies가 null이면 cookies 값 사용
+      let totalCookies = classData?.totalCookies;
+      
+      // totalCookies가 null이거나 없으면 cookies 값으로 대체
+      if (totalCookies === null || totalCookies === undefined || isNaN(totalCookies)) {
+        totalCookies = classData?.cookies || 0;
+      }
+      
+      // 숫자로 변환
+      totalCookies = Number(totalCookies);
+
+      console.log('✅ 최종 사용할 쿠키 개수:', totalCookies);
 
       const state   = getMonsterState(totalCookies);
       const percent = calculateProgressPercent(
@@ -396,6 +479,9 @@
       try {
         setLoading(true);
 
+        console.log('🔑 사용 중인 API_KEY:', API_KEY);
+        console.log('📚 찾으려는 CLASS_NAME:', CLASS_NAME);
+
         const response = await fetch(API_URL, {
           method: 'GET',
           headers: {
@@ -403,38 +489,45 @@
           }
         });
 
+        console.log('📡 API 응답 상태:', response.status);
+
         if (!response.ok) {
-          // 401, 403, 429, 500 등
           throw new Error(`API 응답 오류 (HTTP ${response.status})`);
         }
 
         const json = await response.json();
-        console.log('전체 응답:', json); // 디버깅용
+        console.log('📦 전체 응답:', json);
 
         if (json.result !== true) {
-          // API KEY 오류 등
+          console.error('❌ API 에러:', json.message);
           throw new Error(json.message || 'API에서 오류를 반환했습니다.');
         }
 
         const list = Array.isArray(json.data) ? json.data : [];
-        console.log('클래스 리스트:', list); // 디버깅용
+        console.log('📋 클래스 리스트:', list);
 
         if (!list.length) {
           throw new Error('API 응답에 학급 데이터가 없습니다.');
         }
 
+        // 모든 클래스 이름 출력
+        console.log('📝 등록된 클래스 이름들:');
+        list.forEach((item, index) => {
+          console.log(`  ${index + 1}. "${item.name}" - totalCookies: ${item.totalCookies}, cookies: ${item.cookies}`);
+        });
+
         // 내 반 찾기
         let classData = list.find((item) => item.name === CLASS_NAME);
-        console.log('찾은 클래스 데이터:', classData); // 디버깅용
+        console.log('🎯 찾은 클래스 데이터:', classData);
 
         if (!classData) {
-          // 이름이 안 맞으면 첫 번째 반으로라도 표시
+          console.warn('⚠️ 클래스 이름이 일치하지 않아 첫 번째 반 사용');
           classData = list[0];
         }
 
         updateUIWithClassData(classData);
       } catch (err) {
-        console.error('에러 상세:', err);
+        console.error('💥 에러 발생:', err);
         showError(err.message || '알 수 없는 오류가 발생했습니다.');
       } finally {
         setLoading(false);
@@ -444,11 +537,19 @@
     // ==========================
     // 6. 초기화
     // ==========================
-    document.addEventListener('DOMContentLoaded', () => {
+    function initApp() {
+      console.log('🚀 앱 초기화 시작!');
       fetchClassData();
       reloadButtonEl.addEventListener('click', fetchClassData);
       setInterval(fetchClassData, REFRESH_INTERVAL_MS);
-    });
+    }
+
+    // DOM 준비 여부 체크
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
   </script>
 </body>
 </html>
