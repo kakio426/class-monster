@@ -227,6 +227,92 @@
       color: #999;
     }
 
+    /* ⭐ 레벨업 애니메이션 CSS */
+    .levelup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .levelup-overlay.show {
+      display: flex;
+    }
+
+    .levelup-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 60px;
+      border-radius: 30px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .levelup-card h2 {
+      font-size: 48px;
+      color: #fff;
+      margin-bottom: 10px;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .levelup-card .emoji {
+      font-size: 80px;
+      margin: 20px 0;
+      animation: bounce 1s infinite;
+    }
+
+    .levelup-card p {
+      font-size: 20px;
+      color: #ffe4f2;
+      margin-top: 10px;
+    }
+
+    .levelup-close {
+      margin-top: 30px;
+      padding: 12px 30px;
+      background: #fff;
+      color: #667eea;
+      border: none;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+      transition: transform 0.1s;
+    }
+
+    .levelup-close:hover {
+      background: #f0f0f0;
+    }
+
+    .levelup-close:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
     @media (max-width: 480px) {
       .app-container {
         padding: 18px 16px 22px;
@@ -240,6 +326,22 @@
       .monster-image {
         width: 135px;
         height: 135px;
+      }
+
+      .levelup-card {
+        padding: 30px 40px;
+      }
+
+      .levelup-card h2 {
+        font-size: 36px;
+      }
+
+      .levelup-card .emoji {
+        font-size: 60px;
+      }
+
+      .levelup-card p {
+        font-size: 16px;
       }
     }
   </style>
@@ -288,16 +390,26 @@
     </div>
   </div>
 
+  <!-- ⭐ 레벨업 축하 팝업 -->
+  <div class="levelup-overlay" id="levelupOverlay">
+    <div class="levelup-card">
+      <h2>🎉 레벨업!</h2>
+      <div class="emoji" id="levelupEmoji">🎊</div>
+      <p id="levelupMessage">우리 반이 레벨 1 달성!</p>
+      <button class="levelup-close" onclick="closeLevelup()">확인</button>
+    </div>
+  </div>
+
   <script>
     // ==========================
     // 1. 기본 설정
     // ==========================
     const API_KEY  = 'ad7855503128e6188fd23f133296506a69f9857cdc3d6a1a';   // ⭐ 본인 API KEY로 변경!
     const API_URL  = 'https://api.dahandin.com/openapi/v1/get/class/list';
-    const CLASS_NAME = '따뜻한인성';               // ⭐ 다했니에 등록된 반 이름과 완전히 동일하게
+    const CLASS_NAME = '따뜻한인성';               // ⭐ 다했니에 등록된 반 이름
     const REFRESH_INTERVAL_MS = 10000;             // 10초
 
-    console.log('🎯 스크립트 로드됨!');
+    console.log('🎯 코드 버전: 2.1 - 레벨업 애니메이션 추가');
     console.log('📚 설정된 CLASS_NAME:', CLASS_NAME);
 
     // ==========================
@@ -315,6 +427,14 @@
     const lastUpdatedEl    = document.getElementById('lastUpdated');
     const reloadButtonEl   = document.getElementById('reloadButton');
     const loadingDotEl     = document.getElementById('loadingDot');
+
+    // ⭐ 레벨업 팝업 요소
+    const levelupOverlayEl = document.getElementById('levelupOverlay');
+    const levelupEmojiEl   = document.getElementById('levelupEmoji');
+    const levelupMessageEl = document.getElementById('levelupMessage');
+
+    // ⭐ 이전 레벨 저장 (localStorage)
+    let previousLevel = localStorage.getItem('previousLevel') || 'egg';
 
     // ==========================
     // 3. 유틸 함수
@@ -348,7 +468,7 @@
         levelText       = '레벨 3';
         rangeText       = '600개 이상';
         minForThisLevel = 600;
-        nextLevelAt     = null;   // 최고 레벨
+        nextLevelAt     = null;
       } else if (totalCookies >= 300) {
         imagePath       = 'images/level2.png';
         levelText       = '레벨 2';
@@ -373,7 +493,7 @@
     }
 
     function calculateProgressPercent(totalCookies, minForThisLevel, nextLevelAt) {
-      if (nextLevelAt === null) return 100;  // 최고 레벨
+      if (nextLevelAt === null) return 100;
       const range = nextLevelAt - minForThisLevel;
       if (range <= 0) return 0;
       const valueInRange = totalCookies - minForThisLevel;
@@ -399,21 +519,79 @@
       statusPillEl.textContent     = '데이터를 불러오는 데 문제가 있어요 😢';
     }
 
+    // ⭐ 레벨업 체크 함수
+    function checkLevelUp(currentState) {
+      const levelMap = {
+        'egg': 0,
+        'level1': 1,
+        'level2': 2,
+        'level3': 3
+      };
+
+      const currentLevelText = currentState.levelText;
+      let currentLevelKey = 'egg';
+      
+      if (currentLevelText.includes('레벨 1')) currentLevelKey = 'level1';
+      else if (currentLevelText.includes('레벨 2')) currentLevelKey = 'level2';
+      else if (currentLevelText.includes('레벨 3')) currentLevelKey = 'level3';
+
+      const prevLevelNum = levelMap[previousLevel] || 0;
+      const currLevelNum = levelMap[currentLevelKey] || 0;
+
+      console.log(`🔍 레벨 체크: ${previousLevel} (${prevLevelNum}) → ${currentLevelKey} (${currLevelNum})`);
+
+      if (currLevelNum > prevLevelNum) {
+        showLevelup(currentLevelKey, currentLevelText);
+        previousLevel = currentLevelKey;
+        localStorage.setItem('previousLevel', currentLevelKey);
+      } else {
+        previousLevel = currentLevelKey;
+        localStorage.setItem('previousLevel', currentLevelKey);
+      }
+    }
+
+    function showLevelup(levelKey, levelText) {
+      const emojiMap = {
+        'egg': '🐣',
+        'level1': '⭐',
+        'level2': '🌟',
+        'level3': '💎'
+      };
+
+      const messageMap = {
+        'egg': '알에서 부화했어요!',
+        'level1': '우리 반이 레벨 1 달성!',
+        'level2': '와! 레벨 2까지 왔어요!',
+        'level3': '최고 레벨 3 달성! 🎊'
+      };
+
+      levelupEmojiEl.textContent = emojiMap[levelKey] || '🎉';
+      levelupMessageEl.textContent = messageMap[levelKey] || `${levelText} 달성!`;
+      levelupOverlayEl.classList.add('show');
+
+      // 자동으로 3초 후 닫기
+      setTimeout(() => {
+        levelupOverlayEl.classList.remove('show');
+      }, 3000);
+    }
+
+    function closeLevelup() {
+      levelupOverlayEl.classList.remove('show');
+    }
+
     // ==========================
-    // 4. UI 갱신 핵심 함수 (수정됨!)
+    // 4. UI 갱신 핵심 함수
     // ==========================
     function updateUIWithClassData(classData) {
       const name = classData?.name || '학급 이름 없음';
 
-      // ⭐ 수정: totalCookies가 null이면 cookies 값 사용
+      // ⭐ totalCookies가 null이면 cookies 값 사용
       let totalCookies = classData?.totalCookies;
       
-      // totalCookies가 null이거나 없으면 cookies 값으로 대체
       if (totalCookies === null || totalCookies === undefined || isNaN(totalCookies)) {
         totalCookies = classData?.cookies || 0;
       }
       
-      // 숫자로 변환
       totalCookies = Number(totalCookies);
 
       console.log('✅ 최종 사용할 쿠키 개수:', totalCookies);
@@ -467,89 +645,4 @@
       errorMessageEl.style.display = 'none';
       errorMessageEl.textContent   = '';
 
-      // 마지막 업데이트 시간
-      lastUpdatedEl.textContent =
-        `마지막 업데이트: ${formatLastUpdated(new Date())}`;
-    }
-
-    // ==========================
-    // 5. API 호출
-    // ==========================
-    async function fetchClassData() {
-      try {
-        setLoading(true);
-
-        console.log('🔑 사용 중인 API_KEY:', API_KEY);
-        console.log('📚 찾으려는 CLASS_NAME:', CLASS_NAME);
-
-        const response = await fetch(API_URL, {
-          method: 'GET',
-          headers: {
-            'X-API-Key': API_KEY
-          }
-        });
-
-        console.log('📡 API 응답 상태:', response.status);
-
-        if (!response.ok) {
-          throw new Error(`API 응답 오류 (HTTP ${response.status})`);
-        }
-
-        const json = await response.json();
-        console.log('📦 전체 응답:', json);
-
-        if (json.result !== true) {
-          console.error('❌ API 에러:', json.message);
-          throw new Error(json.message || 'API에서 오류를 반환했습니다.');
-        }
-
-        const list = Array.isArray(json.data) ? json.data : [];
-        console.log('📋 클래스 리스트:', list);
-
-        if (!list.length) {
-          throw new Error('API 응답에 학급 데이터가 없습니다.');
-        }
-
-        // 모든 클래스 이름 출력
-        console.log('📝 등록된 클래스 이름들:');
-        list.forEach((item, index) => {
-          console.log(`  ${index + 1}. "${item.name}" - totalCookies: ${item.totalCookies}, cookies: ${item.cookies}`);
-        });
-
-        // 내 반 찾기
-        let classData = list.find((item) => item.name === CLASS_NAME);
-        console.log('🎯 찾은 클래스 데이터:', classData);
-
-        if (!classData) {
-          console.warn('⚠️ 클래스 이름이 일치하지 않아 첫 번째 반 사용');
-          classData = list[0];
-        }
-
-        updateUIWithClassData(classData);
-      } catch (err) {
-        console.error('💥 에러 발생:', err);
-        showError(err.message || '알 수 없는 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // ==========================
-    // 6. 초기화
-    // ==========================
-    function initApp() {
-      console.log('🚀 앱 초기화 시작!');
-      fetchClassData();
-      reloadButtonEl.addEventListener('click', fetchClassData);
-      setInterval(fetchClassData, REFRESH_INTERVAL_MS);
-    }
-
-    // DOM 준비 여부 체크
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initApp);
-    } else {
-      initApp();
-    }
-  </script>
-</body>
-</html>
+      // 마
