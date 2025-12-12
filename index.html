@@ -10,6 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
   
+  <!-- 모바일 디버깅 도구 (개발 완료 후 삭제 가능) -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
   
   <style>
     * {
@@ -224,7 +227,7 @@
       color: #999;
     }
 
-    /* ⭐ 다했니 버튼 (footer용) */
+    /* 다했니 버튼 (footer용) */
     .dahandin-button {
       font-size: 11px;
       padding: 4px 8px;
@@ -238,6 +241,7 @@
       display: inline-block;
       font-family: "Baloo 2", sans-serif;
       font-weight: 600;
+      border: none;
     }
 
     .dahandin-button:hover {
@@ -249,7 +253,26 @@
       box-shadow: 0 1px 0 rgba(76, 175, 80, 0.7);
     }
 
-    /* ⭐ 플로팅 다했니 버튼 */
+    .settings-button {
+      background: #ff6b6b;
+      box-shadow: 0 2px 0 rgba(255, 107, 107, 0.5);
+    }
+
+    .settings-button:hover {
+      background: #ff5252;
+    }
+
+    .share-button {
+      background: #ffd93d;
+      color: #333;
+      box-shadow: 0 2px 0 rgba(255, 217, 61, 0.5);
+    }
+
+    .share-button:hover {
+      background: #ffca1c;
+    }
+
+    /* 플로팅 다했니 버튼 */
     .floating-dahandin {
       position: fixed;
       bottom: 30px;
@@ -277,6 +300,121 @@
 
     .floating-dahandin:active {
       transform: translateY(-1px);
+    }
+
+    /* ⭐ API 설정 팝업 */
+    .api-setup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .api-setup-overlay.show {
+      display: flex;
+    }
+
+    .api-setup-card {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .api-setup-card h2 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .api-setup-card > p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #444;
+      font-size: 14px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: "Baloo 2", sans-serif;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .api-submit-button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s;
+      font-family: "Baloo 2", sans-serif;
+    }
+
+    .api-submit-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .api-submit-button:active {
+      transform: translateY(0);
+    }
+
+    .api-help {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+
+    .api-help p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .api-help a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .api-help a:hover {
+      text-decoration: underline;
     }
 
     /* 레벨업 애니메이션 CSS */
@@ -354,6 +492,17 @@
       to { opacity: 1; }
     }
 
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     @keyframes popIn {
       0% { transform: scale(0.3); opacity: 0; }
       50% { transform: scale(1.05); }
@@ -378,6 +527,14 @@
       .monster-image {
         width: 135px;
         height: 135px;
+      }
+
+      .api-setup-card {
+        padding: 30px 25px;
+      }
+
+      .api-setup-card h2 {
+        font-size: 24px;
       }
 
       .levelup-card {
@@ -406,6 +563,33 @@
   </style>
 </head>
 <body>
+
+  <!-- ⭐ API 키 입력 팝업 -->
+  <div class="api-setup-overlay" id="apiSetupOverlay">
+    <div class="api-setup-card">
+      <h2>🔑 다했니 API 키 입력</h2>
+      <p>본인의 다했니 API 키를 입력하면<br>우리 반 몬스터를 키울 수 있어요!</p>
+      
+      <div class="input-group">
+        <label>API 키</label>
+        <input type="text" id="apiKeyInput" placeholder="여기에 API 키를 붙여넣으세요" />
+      </div>
+      
+      <div class="input-group">
+        <label>클래스 이름</label>
+        <input type="text" id="classNameInput" placeholder="예: 3학년 1반" />
+      </div>
+      
+      <button class="api-submit-button" onclick="saveApiKey()">시작하기</button>
+      
+      <div class="api-help">
+        <p>💡 <strong>API 키는 어디서 받나요?</strong></p>
+        <p>다했니 사이트 → 설정 → API 키 발급 메뉴에서 받을 수 있어요</p>
+        <a href="https://www.dahandin.com" target="_blank">다했니 사이트로 가기 →</a>
+      </div>
+    </div>
+  </div>
+
   <div class="app-container">
     <div class="title-area">
       <div class="badge">🍪 클래스 몬스터 키우기</div>
@@ -443,10 +627,18 @@
     <div class="footer">
       <span class="last-updated" id="lastUpdated">마지막 업데이트: -</span>
       <span style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-        <!-- ⭐ Footer 다했니 버튼 -->
+        <!-- 다했니 버튼 -->
         <a href="https://www.dahandin.com" target="_blank" class="dahandin-button">
           🏠 다했니
         </a>
+        <!-- 공유 버튼 -->
+        <button class="dahandin-button share-button" onclick="generateShareLink()">
+          🔗 공유
+        </button>
+        <!-- 설정 버튼 -->
+        <button class="dahandin-button settings-button" onclick="resetApiKey()">
+          ⚙️ 설정
+        </button>
         <button class="reload-button" id="reloadButton">🔄 새로고침</button>
         <span class="loading-dot" id="loadingDot" style="display:none;">(불러오는 중)</span>
       </span>
@@ -463,7 +655,7 @@
     </div>
   </div>
 
-  <!-- ⭐ 플로팅 다했니 버튼 -->
+  <!-- 플로팅 다했니 버튼 -->
   <a href="https://www.dahandin.com" target="_blank" class="floating-dahandin">
     <span>🏠</span>
     <span>다했니로 가기</span>
@@ -473,13 +665,14 @@
     // ==========================
     // 1. 기본 설정
     // ==========================
-    const API_KEY  = 'ad7855503128e6188fd23f133296506a69f9857cdc3d6a1a';   // ⭐ 본인 API KEY로 변경!
     const API_URL  = 'https://api.dahandin.com/openapi/v1/get/class/list';
-    const CLASS_NAME = '따뜻한인성';               // ⭐ 다했니에 등록된 반 이름
-    const REFRESH_INTERVAL_MS = 10000;             // 10초
+    const REFRESH_INTERVAL_MS = 10000;  // 10초
 
-    console.log('🎯 코드 버전: 2.2 - 다했니 버튼 추가');
-    console.log('📚 설정된 CLASS_NAME:', CLASS_NAME);
+    // ⭐ URL 파라미터 또는 localStorage에서 가져오기
+    let API_KEY = '';
+    let CLASS_NAME = '';
+
+    console.log('🎯 코드 버전: 3.0 - API 키 입력 + 공유 링크');
 
     // ==========================
     // 2. DOM 요소
@@ -497,6 +690,11 @@
     const reloadButtonEl   = document.getElementById('reloadButton');
     const loadingDotEl     = document.getElementById('loadingDot');
 
+    // API 설정 팝업
+    const apiSetupOverlayEl = document.getElementById('apiSetupOverlay');
+    const apiKeyInputEl     = document.getElementById('apiKeyInput');
+    const classNameInputEl  = document.getElementById('classNameInput');
+
     // 레벨업 팝업 요소
     const levelupOverlayEl = document.getElementById('levelupOverlay');
     const levelupEmojiEl   = document.getElementById('levelupEmoji');
@@ -506,7 +704,125 @@
     let previousLevel = localStorage.getItem('previousLevel') || 'egg';
 
     // ==========================
-    // 3. 유틸 함수
+    // 3. URL 파라미터 처리
+    // ==========================
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        apiKey: params.get('key'),
+        className: params.get('class')
+      };
+    }
+
+    function loadApiSettings() {
+      const urlParams = getUrlParams();
+      
+      // 1순위: URL 파라미터
+      if (urlParams.apiKey && urlParams.className) {
+        API_KEY = urlParams.apiKey;
+        CLASS_NAME = decodeURIComponent(urlParams.className);
+        
+        // localStorage에 저장
+        localStorage.setItem('dahandin_api_key', API_KEY);
+        localStorage.setItem('dahandin_class_name', CLASS_NAME);
+        
+        // URL에서 파라미터 제거 (보안)
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        console.log('✅ URL 파라미터에서 설정 로드');
+        return true;
+      }
+      
+      // 2순위: localStorage
+      const savedKey = localStorage.getItem('dahandin_api_key');
+      const savedClass = localStorage.getItem('dahandin_class_name');
+      
+      if (savedKey && savedClass) {
+        API_KEY = savedKey;
+        CLASS_NAME = savedClass;
+        console.log('✅ localStorage에서 설정 로드');
+        return true;
+      }
+      
+      console.log('⚠️ 저장된 설정 없음 - 입력 필요');
+      return false;
+    }
+
+    // ==========================
+    // 4. API 키 저장/초기화
+    // ==========================
+    function saveApiKey() {
+      const apiKey = apiKeyInputEl.value.trim();
+      const className = classNameInputEl.value.trim();
+      
+      if (!apiKey) {
+        alert('❌ API 키를 입력해주세요!');
+        return;
+      }
+      
+      if (!className) {
+        alert('❌ 클래스 이름을 입력해주세요!');
+        return;
+      }
+      
+      // localStorage에 저장
+      localStorage.setItem('dahandin_api_key', apiKey);
+      localStorage.setItem('dahandin_class_name', className);
+      
+      API_KEY = apiKey;
+      CLASS_NAME = className;
+      
+      console.log('✅ API 설정 저장 완료');
+      
+      // 팝업 닫기
+      apiSetupOverlayEl.classList.remove('show');
+      
+      // 데이터 가져오기
+      fetchClassData();
+      
+      // 자동 새로고침 시작
+      setInterval(fetchClassData, REFRESH_INTERVAL_MS);
+    }
+
+    function resetApiKey() {
+      if (confirm('⚙️ API 키를 다시 입력하시겠어요?\n(현재 데이터는 유지됩니다)')) {
+        apiKeyInputEl.value = API_KEY;
+        classNameInputEl.value = CLASS_NAME;
+        apiSetupOverlayEl.classList.add('show');
+      }
+    }
+
+    // ⭐ 공유 링크 생성
+    function generateShareLink() {
+      if (!API_KEY || !CLASS_NAME) {
+        alert('❌ API 키와 클래스 이름이 설정되지 않았습니다.');
+        return;
+      }
+      
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = `${baseUrl}?key=${encodeURIComponent(API_KEY)}&class=${encodeURIComponent(CLASS_NAME)}`;
+      
+      // 클립보드 복사
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          alert('🎉 공유 링크가 복사되었어요!\n\n다른 선생님께 보내주세요!\n링크를 받은 분은 클릭만 하면 바로 사용 가능합니다.');
+        }).catch(() => {
+          // Fallback
+          showShareLinkPrompt(shareUrl);
+        });
+      } else {
+        // Fallback for older browsers
+        showShareLinkPrompt(shareUrl);
+      }
+    }
+
+    function showShareLinkPrompt(url) {
+      const message = '이 링크를 복사해서 공유하세요:';
+      prompt(message, url);
+    }
+
+    // ==========================
+    // 5. 유틸 함수
     // ==========================
     function formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
@@ -649,7 +965,7 @@
     }
 
     // ==========================
-    // 4. UI 갱신 핵심 함수
+    // 6. UI 갱신 핵심 함수
     // ==========================
     function updateUIWithClassData(classData) {
       const name = classData?.name || '학급 이름 없음';
@@ -723,7 +1039,7 @@
     }
 
     // ==========================
-    // 5. API 호출
+    // 7. API 호출
     // ==========================
     async function fetchClassData() {
       try {
@@ -785,10 +1101,25 @@
     }
 
     // ==========================
-    // 6. 초기화
+    // 8. 초기화
     // ==========================
     function initApp() {
       console.log('🚀 앱 초기화 시작!');
+      
+      // API 설정 로드
+      const hasSettings = loadApiSettings();
+      
+      if (!hasSettings) {
+        // 설정이 없으면 입력 팝업 띄우기
+        apiSetupOverlayEl.classList.add('show');
+        console.log('⚠️ API 설정 입력 필요');
+        return;
+      }
+      
+      // 설정이 있으면 데이터 가져오기
+      console.log('✅ API 설정 로드 완료');
+      console.log('📚 CLASS_NAME:', CLASS_NAME);
+      
       fetchClassData();
       reloadButtonEl.addEventListener('click', fetchClassData);
       setInterval(fetchClassData, REFRESH_INTERVAL_MS);
