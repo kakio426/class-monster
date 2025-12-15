@@ -10,7 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap" rel="stylesheet">
   
-  
   <style>
     * {
       box-sizing: border-box;
@@ -326,6 +325,8 @@
       width: 90%;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.4s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .api-setup-card h2 {
@@ -367,6 +368,63 @@
     .input-group input:focus {
       outline: none;
       border-color: #667eea;
+    }
+
+    .input-group input:disabled {
+      background: #f5f5f5;
+      cursor: not-allowed;
+    }
+
+    /* ⭐ 학급 목록 불러오기 버튼 */
+    .load-class-button {
+      width: 100%;
+      padding: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: "Baloo 2", sans-serif;
+      margin-top: 8px;
+    }
+
+    .load-class-button:hover {
+      background: #45a049;
+      transform: translateY(-1px);
+    }
+
+    .load-class-button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ⭐ 드롭다운 스타일 */
+    #classSelectArea select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: "Baloo 2", sans-serif;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      background: white;
+    }
+
+    #classSelectArea select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    #classSelectArea small {
+      display: block;
+      margin-top: 6px;
+      color: #666;
+      font-size: 12px;
     }
 
     .api-submit-button {
@@ -570,11 +628,23 @@
       <div class="input-group">
         <label>API 키</label>
         <input type="text" id="apiKeyInput" placeholder="여기에 API 키를 붙여넣으세요" />
+        <!-- ⭐ 학급 목록 불러오기 버튼 -->
+        <button class="load-class-button" onclick="loadClassList()">
+          📋 내 학급 목록 불러오기
+        </button>
       </div>
       
       <div class="input-group">
-        <label>클래스 이름</label>
-        <input type="text" id="classNameInput" placeholder="예: 3학년 1반" />
+        <label>클래스 선택</label>
+        <!-- ⭐ 이 영역이 드롭다운으로 바뀜 -->
+        <div id="classSelectArea">
+          <input 
+            type="text" 
+            id="classNameInput" 
+            placeholder="먼저 API 키를 입력하고 '내 학급 목록 불러오기' 클릭" 
+            disabled 
+          />
+        </div>
       </div>
       
       <button class="api-submit-button" onclick="saveApiKey()">시작하기</button>
@@ -669,7 +739,7 @@
     let API_KEY = '';
     let CLASS_NAME = '';
 
-    console.log('🎯 코드 버전: 3.0 - API 키 입력 + 공유 링크');
+    console.log('🎯 코드 버전: 4.0 - 드롭다운 선택 기능 추가');
 
     // ==========================
     // 2. DOM 요소
@@ -746,11 +816,99 @@
     }
 
     // ==========================
-    // 4. API 키 저장/초기화
+    // 4. ⭐ 학급 목록 불러오기 (NEW!)
+    // ==========================
+    async function loadClassList() {
+      const apiKey = apiKeyInputEl.value.trim();
+      
+      if (!apiKey) {
+        alert('❌ 먼저 API 키를 입력해주세요!');
+        return;
+      }
+      
+      const button = document.querySelector('.load-class-button');
+      button.disabled = true;
+      button.textContent = '⏳ 불러오는 중...';
+      
+      try {
+        const response = await fetch(API_URL, {
+          method: 'GET',
+          headers: { 'X-API-Key': apiKey }
+        });
+        
+        console.log('📡 학급 목록 API 응답:', response.status);
+        
+        if (!response.ok) {
+          throw new Error('API 키가 올바르지 않습니다.');
+        }
+        
+        const json = await response.json();
+        console.log('📦 학급 목록 데이터:', json);
+        
+        if (json.result !== true) {
+          throw new Error(json.message || 'API 오류');
+        }
+        
+        const classList = Array.isArray(json.data) ? json.data : [];
+        
+        if (classList.length === 0) {
+          throw new Error('등록된 학급이 없습니다.');
+        }
+        
+        // ✅ 성공: 드롭다운 만들기
+        showClassDropdown(classList);
+        button.textContent = '✅ 불러오기 완료!';
+        
+      } catch (err) {
+        console.error('❌ 학급 목록 로드 실패:', err);
+        alert(`❌ ${err.message}`);
+        button.disabled = false;
+        button.textContent = '📋 내 학급 목록 불러오기';
+      }
+    }
+
+    // ⭐ 드롭다운 UI 만들기
+    function showClassDropdown(classList) {
+      const selectArea = document.getElementById('classSelectArea');
+      
+      // select 태그 생성
+      const selectHTML = `
+        <select id="classNameSelect" onchange="updateClassName()">
+          <option value="">학급을 선택하세요</option>
+          ${classList.map(c => {
+            const cookieText = c.totalCookies !== null && c.totalCookies !== undefined 
+              ? c.totalCookies 
+              : (c.cookies || 0);
+            return `<option value="${c.name}">${c.name} (쿠키: ${formatNumber(cookieText)}개)</option>`;
+          }).join('')}
+        </select>
+        <small style="display: block; margin-top: 6px; color: #4CAF50; font-weight: 600;">
+          💡 학급을 선택하면 자동으로 정확한 이름이 입력돼요!
+        </small>
+      `;
+      
+      selectArea.innerHTML = selectHTML;
+      console.log('✅ 드롭다운 생성 완료');
+    }
+
+    // ⭐ 선택한 학급 이름 저장
+    function updateClassName() {
+      const select = document.getElementById('classNameSelect');
+      CLASS_NAME = select.value;
+      console.log('✅ 선택된 학급:', CLASS_NAME);
+    }
+
+    // ==========================
+    // 5. API 키 저장/초기화
     // ==========================
     function saveApiKey() {
       const apiKey = apiKeyInputEl.value.trim();
-      const className = classNameInputEl.value.trim();
+      
+      // ⭐ select가 있으면 select에서, 없으면 input에서 가져오기
+      const selectEl = document.getElementById('classNameSelect');
+      const className = selectEl 
+        ? selectEl.value 
+        : classNameInputEl.value.trim();
       
       if (!apiKey) {
         alert('❌ API 키를 입력해주세요!');
@@ -758,7 +916,7 @@
       }
       
       if (!className) {
-        alert('❌ 클래스 이름을 입력해주세요!');
+        alert('❌ 학급을 선택하거나 입력해주세요!');
         return;
       }
       
@@ -770,6 +928,8 @@
       CLASS_NAME = className;
       
       console.log('✅ API 설정 저장 완료');
+      console.log('🔑 API_KEY:', API_KEY);
+      console.log('📚 CLASS_NAME:', CLASS_NAME);
       
       // 팝업 닫기
       apiSetupOverlayEl.classList.remove('show');
@@ -784,7 +944,16 @@
     function resetApiKey() {
       if (confirm('⚙️ API 키를 다시 입력하시겠어요?\n(현재 데이터는 유지됩니다)')) {
         apiKeyInputEl.value = API_KEY;
-        classNameInputEl.value = CLASS_NAME;
+        // 기존 input 복원
+        const selectArea = document.getElementById('classSelectArea');
+        selectArea.innerHTML = `
+          <input 
+            type="text" 
+            id="classNameInput" 
+            placeholder="먼저 API 키를 입력하고 '내 학급 목록 불러오기' 클릭" 
+            value="${CLASS_NAME}"
+          />
+        `;
         apiSetupOverlayEl.classList.add('show');
       }
     }
@@ -804,11 +973,9 @@
         navigator.clipboard.writeText(shareUrl).then(() => {
           alert('🎉 공유 링크가 복사되었어요!\n\n다른 선생님께 보내주세요!\n링크를 받은 분은 클릭만 하면 바로 사용 가능합니다.');
         }).catch(() => {
-          // Fallback
           showShareLinkPrompt(shareUrl);
         });
       } else {
-        // Fallback for older browsers
         showShareLinkPrompt(shareUrl);
       }
     }
@@ -819,7 +986,7 @@
     }
 
     // ==========================
-    // 5. 유틸 함수
+    // 6. 유틸 함수
     // ==========================
     function formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return '0';
@@ -962,7 +1129,7 @@
     }
 
     // ==========================
-    // 6. UI 갱신 핵심 함수
+    // 7. UI 갱신 핵심 함수
     // ==========================
     function updateUIWithClassData(classData) {
       const name = classData?.name || '학급 이름 없음';
@@ -1036,7 +1203,7 @@
     }
 
     // ==========================
-    // 7. API 호출
+    // 8. API 호출
     // ==========================
     async function fetchClassData() {
       try {
@@ -1098,7 +1265,7 @@
     }
 
     // ==========================
-    // 8. 초기화
+    // 9. 초기화
     // ==========================
     function initApp() {
       console.log('🚀 앱 초기화 시작!');
