@@ -867,36 +867,38 @@
       }
     }
 
-    // ⭐ 드롭다운 UI 만들기
-    function showClassDropdown(classList) {
-      const selectArea = document.getElementById('classSelectArea');
-      
-      // select 태그 생성
-      const selectHTML = `
-        <select id="classNameSelect" onchange="updateClassName()">
-          <option value="">학급을 선택하세요</option>
-          ${classList.map(c => {
-            const cookieText = c.totalCookies !== null && c.totalCookies !== undefined 
-              ? c.totalCookies 
-              : (c.cookies || 0);
-            return `<option value="${c.name}">${c.name} (쿠키: ${formatNumber(cookieText)}개)</option>`;
-          }).join('')}
-        </select>
-        <small style="display: block; margin-top: 6px; color: #4CAF50; font-weight: 600;">
-          💡 학급을 선택하면 자동으로 정확한 이름이 입력돼요!
-        </small>
-      `;
-      
-      selectArea.innerHTML = selectHTML;
-      console.log('✅ 드롭다운 생성 완료');
-    }
+    // ⭐ 드롭다운 UI 만들기 (개선 버전)
+function showClassDropdown(classList) {
+  const selectArea = document.getElementById('classSelectArea');
+  
+  // select 태그 생성 (현재 선택된 학급을 selected로 표시)
+  const selectHTML = `
+    <select id="classNameSelect" onchange="updateClassName()">
+      <option value="">학급을 선택하세요</option>
+      ${classList.map(c => {
+        const cookieText = c.totalCookies !== null && c.totalCookies !== undefined 
+          ? c.totalCookies 
+          : (c.cookies || 0);
+        const isSelected = c.name === CLASS_NAME ? 'selected' : '';
+        return `<option value="${c.name}" ${isSelected}>${c.name} (쿠키: ${formatNumber(cookieText)}개)</option>`;
+      }).join('')}
+    </select>
+    <small style="display: block; margin-top: 6px; color: #4CAF50; font-weight: 600;">
+      💡 다른 학급을 선택하면 자동으로 전환돼요!
+    </small>
+  `;
+  
+  selectArea.innerHTML = selectHTML;
+  
+  // ⭐ 현재 선택된 학급을 CLASS_NAME에 반영
+  if (CLASS_NAME) {
+    const select = document.getElementById('classNameSelect');
+    select.value = CLASS_NAME;
+  }
+  
+  console.log('✅ 드롭다운 생성 완료 (현재 학급:', CLASS_NAME, ')');
+}
 
-    // ⭐ 선택한 학급 이름 저장
-    function updateClassName() {
-      const select = document.getElementById('classNameSelect');
-      CLASS_NAME = select.value;
-      console.log('✅ 선택된 학급:', CLASS_NAME);
-    }
 
     // ==========================
     // 5. API 키 저장/초기화
@@ -941,22 +943,23 @@
       setInterval(fetchClassData, REFRESH_INTERVAL_MS);
     }
 
-    function resetApiKey() {
-      if (confirm('⚙️ API 키를 다시 입력하시겠어요?\n(현재 데이터는 유지됩니다)')) {
-        apiKeyInputEl.value = API_KEY;
-        // 기존 input 복원
-        const selectArea = document.getElementById('classSelectArea');
-        selectArea.innerHTML = `
-          <input 
-            type="text" 
-            id="classNameInput" 
-            placeholder="먼저 API 키를 입력하고 '내 학급 목록 불러오기' 클릭" 
-            value="${CLASS_NAME}"
-          />
-        `;
-        apiSetupOverlayEl.classList.add('show');
-      }
+   function resetApiKey() {
+  if (confirm('⚙️ 학급을 다시 선택하시겠어요?')) {
+    // API 키 입력란에 기존 키 표시
+    apiKeyInputEl.value = API_KEY;
+    
+    // 팝업 열기
+    apiSetupOverlayEl.classList.add('show');
+    
+    // ⭐ API 키가 있으면 자동으로 학급 목록 불러오기
+    if (API_KEY) {
+      setTimeout(() => {
+        loadClassList();
+      }, 300); // 팝업 애니메이션 후 실행
     }
+  }
+}
+
 
     // ⭐ 공유 링크 생성
     function generateShareLink() {
